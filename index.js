@@ -96,4 +96,10 @@ bot.on('callback_query', async (query) => {
 })
 
 const PORT = 6666
-app.listen(PORT, () => console.log('app server was started on PORT ' + PORT))
+app.listen(PORT, async () => {
+  console.log('app server will started on PORT ' + PORT)
+  console.log('krivalex present')
+  console.log('krivalex special start process')
+  console.log('app server has been started on PORT ' + PORT)
+  console.log('если видите это сообщение уже должно заработать')
+})

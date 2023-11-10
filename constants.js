@@ -1,10 +1,4 @@
 module.exports = {
-  allParkingUsers: [
-    {
-      name: '',
-      planeNumber: '',
-      speciality: '',
-    },
-  ],
+  allParkingUsers: [],
   countOfParkingPlaces: 100,
 }
