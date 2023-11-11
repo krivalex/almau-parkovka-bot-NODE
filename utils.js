@@ -2,17 +2,35 @@ const { allParkingUsers, countOfParkingPlaces } = require('./constants.js')
 
 module.exports = {
   addUserToParking: (auto) => {
+    let isAlreadyIn = false
+    let isNoPlaces = false
+    let isSuccess = false
+
     if (allParkingUsers.length >= countOfParkingPlaces) {
       return 'no places'
     }
     allParkingUsers?.forEach((el) => {
-      if (el.idUser === auto.idUser) {
-        return 'already in'
+      console.log('exist')
+      console.log(el)
+      console.log('new')
+      console.log(auto)
+      if (el.username === auto.username) {
+        isAlreadyIn = true
       } else {
         allParkingUsers.push(auto)
-        return 'success'
+        isSuccess = true
       }
     })
+    if (allParkingUsers.length === 0) {
+      allParkingUsers.push(auto)
+      return 'success'
+    }
+    if (isAlreadyIn) {
+      return 'already in'
+    }
+    if (isSuccess) {
+      return 'success'
+    }
   },
 
   deleteFromParking: (user) => {

@@ -7,11 +7,13 @@ const cors = require('cors')
 // almau parkovka bot
 const token = '6509778524:AAF-HXbVZOcaRuhnIr9vFhUipTal_5l7kqI'
 
-const bot = new TelegramBot(token, { polling: true })
+const bot = new TelegramBot(token, { polling: { interval: 0, autoStart: true } })
 const app = express()
 
 app.use(express.json())
 app.use(cors())
+
+const regex = /\/*/
 
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id
@@ -28,16 +30,12 @@ bot.on('message', async (msg) => {
           [{ text: 'Число доступных мест', callback_data: 'countPlaces' }],
           [{ text: 'Список людей на паркове', callback_data: 'dataTable' }],
         ],
-      },
-    })
-    await bot.sendMessage(chatId, '', {
-      reply_markup: {
-        keyboard: [
-          [{ text: 'Заехать на парковку', callback_data: 'in' }],
-          [{ text: 'Выехать с парковки', callback_data: 'out' }],
-          [{ text: 'Число доступных мест', callback_data: 'countPlaces' }],
-          [{ text: 'Список людей на паркове', callback_data: 'dataTable' }],
-        ],
+        // keyboard: [
+        //   [{ text: 'Заехать на парковку', callback_data: 'in' }],
+        //   [{ text: 'Выехать с парковки', callback_data: 'out' }],
+        //   [{ text: 'Число доступных мест', callback_data: 'countPlaces' }],
+        //   [{ text: 'Список людей на паркове', callback_data: 'dataTable' }],
+        // ],
       },
     })
   }
@@ -54,7 +52,7 @@ bot.on('callback_query', async (query) => {
     last_name: user.last_name,
     username: user.username,
     timeIn: new Date(),
-    timeInString: this.timeIn.toLocaleString('ru-ru'),
+    timeInString: this.timeIn?.toLocaleString('ru-ru'),
     id: '',
     autoPlate: '',
     timeOut: '',
@@ -65,20 +63,27 @@ bot.on('callback_query', async (query) => {
   }
 
   if (data === 'in') {
-    await bot.sendMessage(chatId, 'Номер вашего автомобиля?')
+    bot.sendMessage(chatId, 'Номер вашего автомобиля?', { reply_markup: { force_reply: true } }).then(async (gotedPlate) => {
+      bot.onReplyToMessage(gotedPlate.chat.id, gotedPlate.message_id, async (msg) => {
+        console.log(msg)
 
-    bot.on('message', async (msg) => {
-      const autoPlate = msg.text
-      newAuto.autoPlate = autoPlate
-      const result = addUserToParking(newAuto)
+        newAuto.autoPlate = msg.text
+        newAuto.first_name = msg.reply_to_message.chat.first_name
+        newAuto.last_name = msg.reply_to_message.chat.last_name
+        newAuto.username = msg.reply_to_message.chat.username
+        newAuto.id = msg.reply_to_message.chat.id
+        const result = addUserToParking(newAuto)
 
-      if (result === 'success') {
-        await bot.sendMessage(chatId, 'Спасибо, вы в списке людей на парковке')
-      } else if (result === 'no places') {
-        await bot.sendMessage(chatId, 'Извините, парковка заполнена')
-      } else if (result === 'already in') {
-        await bot.sendMessage(chatId, 'Вы уже на парковке')
-      }
+        console.log(result)
+
+        if (result === 'success') {
+          await bot.sendMessage(chatId, 'Спасибо, вы в списке людей на парковке')
+        } else if (result === 'no places') {
+          await bot.sendMessage(chatId, 'Извините, парковка заполнена')
+        } else if (result === 'already in') {
+          await bot.sendMessage(chatId, 'Вы уже на парковке')
+        }
+      })
     })
   } else if (data === 'out') {
     const result = deleteFromParking(newAuto)
@@ -89,8 +94,20 @@ bot.on('callback_query', async (query) => {
       await bot.sendMessage(chatId, 'Вас еще нет в списке людей на парковке')
     }
   } else if (data === 'dataTable') {
-    await bot.sendMessage(chatId, `Список людей на паркове ${getAllUsers()}`)
-  } else if ((data = 'countPlaces')) {
+    await bot.sendMessage(chatId, 'Список людей на парковке:')
+    if (getAllUsers().length === 0) {
+      await bot.sendMessage(chatId, 'Парковка пуста')
+    } else {
+      getAllUsers().map(async (el) => {
+        await bot.sendMessage(
+          chatId,
+          ` Логин: ${el.username} \n\n Имя: ${el.first_name} ${el.last_name} \n\n Номер машины: ${el.autoPlate} \n\n Время заезда: ${el.timeIn.toLocaleString(
+            'ru-ru'
+          )} \n\n Время пребывания на парковке: ${String((Date.now() - el.timeIn) / 1000 / 60).substr(0, 4)} минут \n\n`
+        )
+      })
+    }
+  } else if (data === 'countPlaces') {
     await bot.sendMessage(chatId, `Число доступных мест на парковке ${getFreeParkingPlaces()}`)
   }
 })
