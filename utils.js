@@ -9,18 +9,14 @@ module.exports = {
     if (allParkingUsers.length >= countOfParkingPlaces) {
       return 'no places'
     }
+
     allParkingUsers?.forEach((el) => {
-      console.log('exist')
-      console.log(el)
-      console.log('new')
-      console.log(auto)
       if (el.username === auto.username) {
         isAlreadyIn = true
-      } else {
-        allParkingUsers.push(auto)
-        isSuccess = true
+        return
       }
     })
+
     if (allParkingUsers.length === 0) {
       allParkingUsers.push(auto)
       return 'success'
@@ -28,18 +24,24 @@ module.exports = {
     if (isAlreadyIn) {
       return 'already in'
     }
-    if (isSuccess) {
-      return 'success'
-    }
+    allParkingUsers.push(auto)
+    return 'success'
   },
 
   deleteFromParking: (user) => {
+    isSuccess = false
+
     allParkingUsers?.forEach((el, i) => {
       if (el.idUser === user.idUser) {
         allParkingUsers.splice(i, 1)
-        return 'success'
+        isSuccess = true
       }
     })
+
+    if (isSuccess) {
+      return 'success'
+    }
+
     return 'no user'
   },
 
